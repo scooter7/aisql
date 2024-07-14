@@ -5,7 +5,7 @@ from uuid import uuid4
 import psycopg2
 
 from langchain.prompts import ChatPromptTemplate
-from langchain.prompts import SystemMessage, HumanMessagePromptTemplate
+from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings import OpenAIEmbeddings
@@ -72,7 +72,7 @@ def save_database_details(uri):
 
 def generate_sql_query_template(query, db_uri):
     template = ChatPromptTemplate.from_messages([
-        SystemMessage(
+        SystemMessagePromptTemplate(
             content=(
                 f"You are an assistant capable of composing SQL queries. Use the details provided to write a relevant SQL query for the question below. DB connection string is {db_uri}."
                 "Enclose the SQL query with three backticks '```'."
