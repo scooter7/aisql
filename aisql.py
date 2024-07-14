@@ -1,15 +1,13 @@
 import streamlit as st
-import requests
 import os
 import pandas as pd
 from uuid import uuid4
 import psycopg2
 
 from langchain.prompts import ChatPromptTemplate
-from langchain.prompts.chat import SystemMessage, HumanMessagePromptTemplate
-
-from langchain.llms import OpenAI, AzureOpenAI
-from langchain.chat_models import ChatOpenAI, AzureChatOpenAI
+from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate
+from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 from langchain.document_loaders.csv_loader import CSVLoader
@@ -21,7 +19,7 @@ for folder in folders_to_create:
     print(f"Directory '{folder}' checked or created.")
 
 # Load API key from Streamlit secrets
-openai_api_key = st.secrets["openai_api_key"]
+openai_api_key = st.secrets["openai"]["api_key"]
 
 # Initialize language models and embeddings
 language_model = OpenAI(openai_api_key=openai_api_key)
@@ -75,7 +73,7 @@ def save_database_details(uri):
 
 def generate_sql_query_template(query, db_uri):
     template = ChatPromptTemplate.from_messages([
-        SystemMessage(
+        SystemMessagePromptTemplate(
             content=(
                 f"You are an assistant capable of composing SQL queries. Use the details provided to write a relevant SQL query for the question below. DB connection string is {db_uri}."
                 "Enclose the SQL query with three backticks '```'."
