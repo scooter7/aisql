@@ -5,10 +5,11 @@ from uuid import uuid4
 import psycopg2
 
 from langchain.prompts import ChatPromptTemplate
-from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate
+from langchain.prompts.chat import SystemMessage, HumanMessagePromptTemplate
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings import OpenAIEmbeddings
+from dotenv import load_dotenv
 from langchain.vectorstores import Chroma
 from langchain.document_loaders import CSVLoader
 
@@ -18,8 +19,9 @@ for folder in folders_to_create:
     os.makedirs(folder, exist_ok=True)
     print(f"Directory '{folder}' checked or created.")
 
-# Load API key from Streamlit secrets
-openai_api_key = st.secrets["openai"]["api_key"]
+# Load environment and API keys
+load_dotenv()
+openai_api_key = os.getenv("OPENAI_API_KEY")
 
 # Initialize language models and embeddings
 language_model = OpenAI(api_key=openai_api_key)
@@ -46,7 +48,7 @@ def fetch_foreign_key_details(cursor):
     return cursor.fetchall()
 
 def create_vector_database(data, directory):
-    loader = CSVLoader(data=data, encoding="utf8")
+    loader = CSVLoader(file_path=data, encoding="utf8")
     document_data = loader.load()
     vector_db = Chroma.from_documents(document_data, embedding=embeddings, persist_directory=directory)
     vector_db.persist()
@@ -59,7 +61,7 @@ def save_database_details(uri):
     df = pd.DataFrame(details, columns=['table_name', 'column_name', 'data_type'])
     csv_path = f'csvs/tables_{unique_id}.csv'
     df.to_csv(csv_path, index=False)
-    create_vector_database(df, f"./vectors/tables_{unique_id}")
+    create_vector_database(csv_path, f"./vectors/tables_{unique_id}")
     
     foreign_keys = fetch_foreign_key_details(cur)
     fk_df = pd.DataFrame(foreign_keys, columns=['table_name', 'foreign_key', 'constraint_definition'])
@@ -72,7 +74,7 @@ def save_database_details(uri):
 
 def generate_sql_query_template(query, db_uri):
     template = ChatPromptTemplate.from_messages([
-        SystemMessagePromptTemplate(
+        SystemMessage(
             content=(
                 f"You are an assistant capable of composing SQL queries. Use the details provided to write a relevant SQL query for the question below. DB connection string is {db_uri}."
                 "Enclose the SQL query with three backticks '```'."
