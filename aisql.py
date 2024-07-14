@@ -5,7 +5,7 @@ from uuid import uuid4
 import psycopg2
 
 from langchain.prompts import ChatPromptTemplate
-from langchain.prompts import SystemMessage, HumanMessagePromptTemplate
+from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings import OpenAIEmbeddings
@@ -37,7 +37,7 @@ def fetch_table_details(cursor):
 
 def fetch_foreign_key_details(cursor):
     sql = """
-        SELECT conrelid::regclass AS table_name, conname AS foreign key,
+        SELECT conrelid::regclass AS table_name, conname AS foreign_key,
                pg_get_constraintdef(oid) AS constraint_definition
         FROM pg_constraint
         WHERE contype = 'f' AND connamespace = 'public'::regnamespace;
@@ -71,17 +71,15 @@ def save_database_details(uri):
     return unique_id
 
 def generate_sql_query_template(query, db_uri):
-    template = ChatPromptTemplate.from_messages([
-        SystemMessage(
-            content=(
-                f"You are an assistant capable of composing SQL queries. Use the details provided to write a relevant SQL query for the question below. DB connection string is {db_uri}."
-                "Enclose the SQL query with three backticks '```'."
-            )
-        ),
-        HumanMessagePromptTemplate.from_template("{text}"),
-    ])
-    response = chat_language_model(template.format_messages(text=query))
-    return response.content
+    prompt = f"""
+    You are an assistant capable of composing SQL queries. Use the details provided to write a relevant SQL query for the question below. 
+    DB connection string is {db_uri}.
+    Enclose the SQL query with three backticks ```.
+
+    Question: {query}
+    """
+    response = chat_language_model.generate(prompt)
+    return response
 
 # Streamlit application setup
 st.title("Database Interaction Tool")
