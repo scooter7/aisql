@@ -5,11 +5,10 @@ from uuid import uuid4
 import psycopg2
 
 from langchain.prompts import ChatPromptTemplate
-from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate
+from langchain.prompts import SystemMessage, HumanMessagePromptTemplate
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings import OpenAIEmbeddings
-from dotenv import load_dotenv
 from langchain.vectorstores import Chroma
 from langchain.document_loaders import CSVLoader
 
@@ -19,9 +18,8 @@ for folder in folders_to_create:
     os.makedirs(folder, exist_ok=True)
     print(f"Directory '{folder}' checked or created.")
 
-# Load environment and API keys
-load_dotenv()
-openai_api_key = os.getenv("OPENAI_API_KEY")
+# Load API key from Streamlit secrets
+openai_api_key = st.secrets["openai_api_key"]
 
 # Initialize language models and embeddings
 language_model = OpenAI(api_key=openai_api_key)
@@ -39,7 +37,7 @@ def fetch_table_details(cursor):
 
 def fetch_foreign_key_details(cursor):
     sql = """
-        SELECT conrelid::regclass AS table_name, conname AS foreign_key,
+        SELECT conrelid::regclass AS table_name, conname AS foreign key,
                pg_get_constraintdef(oid) AS constraint_definition
         FROM pg_constraint
         WHERE contype = 'f' AND connamespace = 'public'::regnamespace;
@@ -74,7 +72,7 @@ def save_database_details(uri):
 
 def generate_sql_query_template(query, db_uri):
     template = ChatPromptTemplate.from_messages([
-        SystemMessagePromptTemplate(
+        SystemMessage(
             content=(
                 f"You are an assistant capable of composing SQL queries. Use the details provided to write a relevant SQL query for the question below. DB connection string is {db_uri}."
                 "Enclose the SQL query with three backticks '```'."
