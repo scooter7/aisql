@@ -5,12 +5,12 @@ from uuid import uuid4
 import psycopg2
 
 from langchain.prompts import ChatPromptTemplate
-from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate
+from langchain.prompts import SystemMessage, HumanMessagePromptTemplate
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
-from langchain.document_loaders.csv_loader import CSVLoader
+from langchain.document_loaders import CSVLoader
 
 # Ensure necessary directories exist
 folders_to_create = ['csvs', 'vectors']
@@ -22,9 +22,9 @@ for folder in folders_to_create:
 openai_api_key = st.secrets["openai"]["api_key"]
 
 # Initialize language models and embeddings
-language_model = OpenAI(openai_api_key=openai_api_key)
-chat_language_model = ChatOpenAI(openai_api_key=openai_api_key, temperature=0.4)
-embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
+language_model = OpenAI(api_key=openai_api_key)
+chat_language_model = ChatOpenAI(api_key=openai_api_key, temperature=0.4)
+embeddings = OpenAIEmbeddings(api_key=openai_api_key)
 
 def fetch_table_details(cursor):
     sql = """
@@ -48,8 +48,7 @@ def fetch_foreign_key_details(cursor):
 def create_vector_database(data, directory):
     loader = CSVLoader(data=data, encoding="utf8")
     document_data = loader.load()
-    vector_db = Chroma(embeddings, persist_directory=directory)
-    vector_db.from_documents(document_data)
+    vector_db = Chroma.from_documents(document_data, embedding=embeddings, persist_directory=directory)
     vector_db.persist()
 
 def save_database_details(uri):
@@ -73,7 +72,7 @@ def save_database_details(uri):
 
 def generate_sql_query_template(query, db_uri):
     template = ChatPromptTemplate.from_messages([
-        SystemMessagePromptTemplate(
+        SystemMessage(
             content=(
                 f"You are an assistant capable of composing SQL queries. Use the details provided to write a relevant SQL query for the question below. DB connection string is {db_uri}."
                 "Enclose the SQL query with three backticks '```'."
