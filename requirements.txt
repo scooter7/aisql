@@ -5,5 +5,4 @@ pyodbc
 langchain
 langchain-community
 langchain-openai
-dotenv
 st-pages
