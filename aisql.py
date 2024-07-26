@@ -34,7 +34,7 @@ def execute_query(query):
 
 # Chatbot function
 def get_chatbot_response(user_input):
-    response = openai.Chat.create(
+    response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {
