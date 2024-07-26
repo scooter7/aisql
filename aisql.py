@@ -2,19 +2,33 @@ import streamlit as st
 import openai
 import mysql.connector
 import pandas as pd
+import os
+from dotenv import load_dotenv
 
-# Load secrets
-sql_host = st.secrets["sql_database"]["host"]
-sql_database = st.secrets["sql_database"]["database"]
-sql_username = st.secrets["sql_database"]["username"]
-sql_password = st.secrets["sql_database"]["password"]
-openai_api_key = st.secrets["openai"]["api_key"]
+# Load secrets from .env file if running locally or from Streamlit secrets if running on Streamlit Cloud
+load_dotenv()
+sql_host = os.getenv("SQL_HOST", st.secrets["sql_database"]["host"])
+sql_database = os.getenv("SQL_DATABASE", st.secrets["sql_database"]["database"])
+sql_username = os.getenv("SQL_USERNAME", st.secrets["sql_database"]["username"])
+sql_password = os.getenv("SQL_PASSWORD", st.secrets["sql_database"]["password"])
+openai_api_key = os.getenv("OPENAI_API_KEY", st.secrets["openai"]["api_key"])
 
 # Configure OpenAI
 openai.api_key = openai_api_key
 
 # Create an OpenAI client
-client = openai
+class OpenAIClient:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        openai.api_key = self.api_key
+
+    def create_chat_completion(self, model, messages):
+        return openai.ChatCompletion.create(
+            model=model,
+            messages=messages,
+        )
+
+client = OpenAIClient(api_key=openai_api_key)
 
 # Database connection
 def connect_to_db():
@@ -37,7 +51,7 @@ def execute_query(query):
 
 # Chatbot function
 def get_chatbot_response(user_input):
-    response = client.ChatCompletion.create(
+    completion = client.create_chat_completion(
         model="gpt-4o-mini",
         messages=[
             {
@@ -50,7 +64,7 @@ def get_chatbot_response(user_input):
             },
         ],
     )
-    return response['choices'][0]['message']['content']
+    return completion.choices[0].message["content"]
 
 # Streamlit UI
 st.title("Chatbot with SQL Querying")
