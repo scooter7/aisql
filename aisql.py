@@ -12,6 +12,7 @@ openai_api_key = st.secrets["openai"]["api_key"]
 
 # Configure OpenAI
 openai.api_key = openai_api_key
+client = openai.OpenAI(api_key=openai_api_key)
 
 # Database connection
 def connect_to_db():
