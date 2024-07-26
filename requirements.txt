@@ -1,8 +1,9 @@
 streamlit
-openai
 pandas
-mysql-connector-python
-requests
-PyPDF2
-python-dotenv
+sqlalchemy
+pyodbc
 langchain
+langchain-community
+langchain-openai
+dotenv
+st-pages
