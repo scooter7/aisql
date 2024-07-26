@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import sqlalchemy
-from dotenv import load_dotenv
 import streamlit as st
 from st_pages import Page, show_pages, add_page_title
 from langchain.text_splitter import CharacterTextSplitter
@@ -54,7 +53,6 @@ def handle_userinput(user_question):
                 "{{MSG}}", message.content), unsafe_allow_html=True)
 
 def main():
-    load_dotenv()
 
     if "conversation" not in st.session_state:
         st.session_state.conversation = None
