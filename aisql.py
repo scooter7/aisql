@@ -1,107 +1,70 @@
 import streamlit as st
-import os
+import openai
+import mysql.connector
 import pandas as pd
-from uuid import uuid4
-import psycopg2
 
-from langchain.prompts import ChatPromptTemplate
-from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate
-from langchain.llms import OpenAI
-from langchain.chat_models import ChatOpenAI
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import Chroma
-from langchain.document_loaders import CSVLoader
+# Load secrets
+sql_host = st.secrets["sql_database"]["host"]
+sql_database = st.secrets["sql_database"]["database"]
+sql_username = st.secrets["sql_database"]["username"]
+sql_password = st.secrets["sql_database"]["password"]
+openai_api_key = st.secrets["openai"]["api_key"]
 
-# Ensure necessary directories exist
-folders_to_create = ['csvs', 'vectors']
-for folder in folders_to_create:
-    os.makedirs(folder, exist_ok=True)
-    print(f"Directory '{folder}' checked or created.")
+# Configure OpenAI
+openai.api_key = openai_api_key
 
-# Load API key from Streamlit secrets
-openai_api_key = st.secrets["openai_api_key"]
+# Database connection
+def connect_to_db():
+    return mysql.connector.connect(
+        host=sql_host,
+        database=sql_database,
+        user=sql_username,
+        password=sql_password
+    )
 
-# Initialize language models and embeddings
-language_model = OpenAI(api_key=openai_api_key)
-chat_language_model = ChatOpenAI(api_key=openai_api_key, temperature=0.4)
-embeddings = OpenAIEmbeddings(api_key=openai_api_key)
-
-def fetch_table_details(cursor):
-    sql = """
-        SELECT table_name, column_name, data_type
-        FROM information_schema.columns
-        WHERE table_schema = 'public';
-    """
-    cursor.execute(sql)
-    return cursor.fetchall()
-
-def fetch_foreign_key_details(cursor):
-    sql = """
-        SELECT conrelid::regclass AS table_name, conname AS foreign_key,
-               pg_get_constraintdef(oid) AS constraint_definition
-        FROM pg_constraint
-        WHERE contype = 'f' AND connamespace = 'public'::regnamespace;
-    """
-    cursor.execute(sql)
-    return cursor.fetchall()
-
-def create_vector_database(data, directory):
-    loader = CSVLoader(file_path=data, encoding="utf8")
-    document_data = loader.load()
-    vector_db = Chroma.from_documents(document_data, embedding=embeddings, persist_directory=directory)
-    vector_db.persist()
-
-def save_database_details(uri):
-    unique_id = str(uuid4()).replace("-", "_")
-    conn = psycopg2.connect(uri)
-    cur = conn.cursor()
-    details = fetch_table_details(cur)
-    df = pd.DataFrame(details, columns=['table_name', 'column_name', 'data_type'])
-    csv_path = f'csvs/tables_{unique_id}.csv'
-    df.to_csv(csv_path, index=False)
-    create_vector_database(csv_path, f"./vectors/tables_{unique_id}")
-    
-    foreign_keys = fetch_foreign_key_details(cur)
-    fk_df = pd.DataFrame(foreign_keys, columns=['table_name', 'foreign_key', 'constraint_definition'])
-    fk_csv_path = f'csvs/foreign_keys_{unique_id}.csv'
-    fk_df.to_csv(fk_csv_path, index=False)
-    
-    cur.close()
+# Function to execute SQL query
+def execute_query(query):
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    cursor.execute(query)
+    result = cursor.fetchall()
+    cursor.close()
     conn.close()
-    return unique_id
+    return result
 
-def generate_sql_query_template(query, db_uri):
-    prompt = f"""
-    You are an assistant capable of composing SQL queries. Use the details provided to write a relevant SQL query for the question below. 
-    DB connection string is {db_uri}.
-    Enclose the SQL query with three backticks ```.
+# Chatbot function
+def get_chatbot_response(user_input):
+    completion = openai.ChatCompletion.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "You specialize in concisely explaining complex topics to 12yo.",
+            },
+            {
+                "role": "user",
+                "content": user_input,
+            },
+        ],
+    )
+    return completion.choices[0].message["content"]
 
-    Question: {query}
-    """
-    response = chat_language_model.generate(prompt)
-    return response
+# Streamlit UI
+st.title("Chatbot with SQL Querying")
 
-# Streamlit application setup
-st.title("Database Interaction Tool")
-uri = st.text_input("Enter the RDS Database URI")
-if st.button("Connect to Database"):
-    if uri:
-        try:
-            unique_id = save_database_details(uri)
-            st.success(f"Connected to database and data saved with ID: {unique_id}")
-        except Exception as e:
-            st.error(f"Failed to connect: {str(e)}")
-    else:
-        st.warning("Please enter a valid database URI.")
+# User input for chatbot
+user_input = st.text_input("Ask the chatbot anything:")
 
-st.subheader("SQL Query Generator")
-query = st.text_area("Enter your query here:")
-if st.button("Generate SQL Query"):
-    if uri and query:
-        try:
-            sql_query = generate_sql_query_template(query, uri)
-            st.text_area("Generated SQL Query", value=sql_query, height=300)
-        except Exception as e:
-            st.error(f"Failed to generate SQL query: {str(e)}")
-    else:
-        st.warning("Please provide both a database URI and a query.")
+if user_input:
+    chatbot_response = get_chatbot_response(user_input)
+    st.write("Chatbot response:")
+    st.write(chatbot_response)
+
+# User input for SQL query
+sql_query = st.text_input("Enter an SQL query:")
+
+if sql_query:
+    query_result = execute_query(sql_query)
+    df = pd.DataFrame(query_result)
+    st.write("SQL Query Result:")
+    st.dataframe(df)
