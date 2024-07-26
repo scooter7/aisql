@@ -12,7 +12,7 @@ openai_api_key = st.secrets["openai"]["api_key"]
 
 # Configure OpenAI
 openai.api_key = openai_api_key
-client = openai.OpenAI(api_key=openai_api_key)
+client = openai.ChatCompletion()
 
 # Database connection
 def connect_to_db():
@@ -35,7 +35,7 @@ def execute_query(query):
 
 # Chatbot function
 def get_chatbot_response(user_input):
-    response = client.chat.completions.create(
+    response = client.create(
         model="gpt-4o-mini",
         messages=[
             {
@@ -48,7 +48,7 @@ def get_chatbot_response(user_input):
             },
         ],
     )
-    return response.choices[0].message["content"]
+    return response['choices'][0]['message']['content']
 
 # Streamlit UI
 st.title("Chatbot with SQL Querying")
