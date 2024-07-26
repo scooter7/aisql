@@ -64,7 +64,7 @@ def main():
 
     if "db_connection" not in st.session_state:
         db_credentials = st.secrets["database"]
-        db_url = f"mssql+pymssql://{db_credentials['username']}:{db_credentials['password']}@{db_credentials['host']}/{db_credentials['database']}"
+        db_url = f"mssql+pytds://{db_credentials['username']}:{db_credentials['password']}@{db_credentials['host']}/{db_credentials['database']}"
         engine = sqlalchemy.create_engine(db_url)
         st.session_state.db_connection = engine.connect()
 
