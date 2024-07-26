@@ -22,14 +22,11 @@ def get_text_chunks(text):
 
 def get_vectorstore(text_chunks, openai_api_key):
     embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
-    #embeddings = HuggingFaceInstructEmbeddings(model_name="hkunlp/instructor-xl")
     vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
     return vectorstore
 
 def get_conversation_chain(vectorstore, openai_api_key):
     llm = ChatOpenAI(model_name="gpt-4", openai_api_key=openai_api_key)
-    #llm = HuggingFaceHub(repo_id="google/flan-t5-xxl", model_kwargs={"temperature":0.5, "max_length":512})
-
     memory = ConversationBufferMemory(
         memory_key='chat_history', return_messages=True)
     conversation_chain = ConversationalRetrievalChain.from_llm(
@@ -54,26 +51,20 @@ def handle_userinput(user_question):
 def main():
     if "conversation" not in st.session_state:
         st.session_state.conversation = None
-        st.session_state['conversation'] = None
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = None
-        st.session_state['chat_history'] = None
 
     st.set_page_config(
         page_title="Chat with your SQL Server database",
         page_icon=":Database:"
     )
 
-    #creating a title for the app
     st.title("Chat Application with Local Database using Generative AI and GPT-4")
-
-    #footer
     st.markdown(footer, unsafe_allow_html=True)
 
-    # Database connection
     if "db_connection" not in st.session_state:
         db_credentials = st.secrets["database"]
-        db_url = f"mssql+pyodbc://{db_credentials['username']}:{db_credentials['password']}@{db_credentials['host']}/{db_credentials['database']}?driver=ODBC+Driver+17+for+SQL+Server"
+        db_url = f"mssql+pymssql://{db_credentials['username']}:{db_credentials['password']}@{db_credentials['host']}/{db_credentials['database']}"
         engine = sqlalchemy.create_engine(db_url)
         st.session_state.db_connection = engine.connect()
 
@@ -84,23 +75,17 @@ def main():
             with st.spinner("Executing query..."):
                 df = pd.read_sql_query(query, st.session_state.db_connection)
                 st.write(df)
-                # get the text chunks
                 text_chunks = get_text_chunks(df.to_string())
-                # create vector store
                 openai_api_key = st.secrets["openai"]["api_key"]
                 vectorstore = get_vectorstore(text_chunks, openai_api_key)
-
-                # create conversation chain
                 st.session_state.conversation = get_conversation_chain(vectorstore, openai_api_key)
         except Exception as e:
             st.error(f"An error occurred: {str(e)}")
-            st.error(traceback.format_exc())
 
     user_question = st.text_input("Ask a question about your data:")
     if user_question and "conversation" in st.session_state and st.session_state.conversation:
         with st.spinner("Processing"):
             handle_userinput(user_question)
 
-# Start
 if __name__ == '__main__':
     main()
