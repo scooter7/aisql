@@ -34,7 +34,7 @@ def execute_query(query):
 
 # Chatbot function
 def get_chatbot_response(user_input):
-    completion = openai.ChatCompletion.create(
+    response = openai.Chat.create(
         model="gpt-4o-mini",
         messages=[
             {
@@ -47,7 +47,7 @@ def get_chatbot_response(user_input):
             },
         ],
     )
-    return completion.choices[0].message["content"]
+    return response.choices[0].message["content"]
 
 # Streamlit UI
 st.title("Chatbot with SQL Querying")
