@@ -12,7 +12,9 @@ openai_api_key = st.secrets["openai"]["api_key"]
 
 # Configure OpenAI
 openai.api_key = openai_api_key
-client = client.chat.completions.create()
+
+# Create an OpenAI client
+client = openai
 
 # Database connection
 def connect_to_db():
@@ -35,7 +37,7 @@ def execute_query(query):
 
 # Chatbot function
 def get_chatbot_response(user_input):
-    response = client.chat.completions.create(
+    response = client.ChatCompletion.create(
         model="gpt-4o-mini",
         messages=[
             {
