@@ -25,7 +25,7 @@ class OpenAIClient:
     class Chat:
         @staticmethod
         def completions_create(model, messages):
-            return openai.ChatCompletion.create(
+            return client.chat.completions.create(
                 model=model,
                 messages=messages,
             )
