@@ -1,7 +1,4 @@
 streamlit
-pandas
-psycopg2-binary
-langchain
 openai
-python-dotenv
-langchain-community
+pandas
+mysql-connector-python
