@@ -1,4 +1,6 @@
 streamlit
-openai
 pandas
 mysql-connector-python
+PyPDF2
+python-dotenv
+langchain
