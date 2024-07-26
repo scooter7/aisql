@@ -23,7 +23,7 @@ class OpenAIClient:
         openai.api_key = self.api_key
 
     def chat_completions_create(self, model, messages):
-        return openai.ChatCompletion.create(
+        return openai.Completion.create(
             model=model,
             messages=messages,
         )
@@ -51,7 +51,7 @@ def execute_query(query):
 
 # Chatbot function
 def get_chatbot_response(user_input):
-    completion = client.chat_completions_create(
+    completion = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {
