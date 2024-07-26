@@ -51,7 +51,7 @@ def execute_query(query):
 
 # Chatbot function
 def get_chatbot_response(user_input):
-    completion = client.create_chat_completion(
+    completion = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {
