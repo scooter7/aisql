@@ -3,5 +3,5 @@ nest-asyncio
 langchain
 langchain_community
 sqlalchemy
-pymysql
+mysqlclient
 openai
