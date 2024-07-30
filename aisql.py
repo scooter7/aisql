@@ -19,7 +19,7 @@ with st.sidebar:
     OPENAI_API_KEY = st.text_input("OPENAI API KEY", key="chatbot_api_key", type="password")
 
     if OPENAI_API_KEY:
-        db_uri = f"mysql+pymysql://{db_config['username']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['database']}?connect_timeout=10"
+        db_uri = f"mysql+mysqldb://{db_config['username']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['database']}?connect_timeout=30"
         try:
             db = SQLDatabase.from_uri(db_uri, sample_rows_in_table_info=3)
             table_names = db.get_usable_table_names()
