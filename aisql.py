@@ -2,7 +2,7 @@
 from langchain_community.agent_toolkits import create_sql_agent
 from langchain_community.utilities.sql_database import SQLDatabase
 from langchain.callbacks import get_openai_callback
-from langchain_openai import ChatOpenAI
+from langchain.chat_models import ChatOpenAI
 import streamlit as st
 
 import nest_asyncio
