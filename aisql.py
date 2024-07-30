@@ -29,8 +29,10 @@ with st.sidebar:
                 st.text(f'Number of Tables: {num_tables}')
                 st.text(f'Table Names: {table_names}')
         except Exception as e:
+            db = None
             st.error(f"Error connecting to database: {e}")
     else:
+        db = None
         st.warning("Please enter your OpenAI API key to continue.")
 
     with st.expander('Model Details'):
@@ -47,7 +49,7 @@ with st.sidebar:
     st.write("[Get your API key](https://platform.openai.com/account/api-keys)")
     st.write("[GitHub](https://github.com/Jayshah25/Chat-with-your-SQL-Database)")
 
-if OPENAI_API_KEY:
+if OPENAI_API_KEY and db:
     llm = ChatOpenAI(model=openai_llm,
                      temperature=temperature,
                      openai_api_key=OPENAI_API_KEY)
@@ -64,6 +66,11 @@ if prompt := st.chat_input():
     # if the user started chatting without setting the OPENAI API KEY
     if not OPENAI_API_KEY:
         st.info("Please add your OpenAI API key to continue.")
+        st.stop()
+
+    # if the database connection is not established
+    if not db:
+        st.info("Please ensure the database connection is established.")
         st.stop()
 
     st.session_state.messages.append({"role": "user", "content": prompt})
