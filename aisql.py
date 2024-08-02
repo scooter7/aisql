@@ -57,7 +57,8 @@ if OPENAI_API_KEY and connection:
     llm = ChatOpenAI(model=openai_llm,
                      temperature=temperature,
                      openai_api_key=OPENAI_API_KEY)
-    agent = create_sql_agent(llm, db=connection, agent_type="openai-tools", verbose=False, stream_runnable=False)
+    sql_database = SQLDatabase(connection_string=connection_string)
+    agent = create_sql_agent(llm, db=sql_database, agent_type="openai-tools", verbose=False, stream_runnable=False)
 
 if "messages" not in st.session_state or reset:
     st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
