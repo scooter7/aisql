@@ -1,7 +1,8 @@
 streamlit
-nest-asyncio
-langchain
-langchain_community
+pandas
 sqlalchemy
 pyodbc
-openai
+langchain
+langchain-community
+langchain-openai
+st-pages
